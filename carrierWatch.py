@@ -49,6 +49,8 @@ general_limits = ['Each Occurrence', 'General Aggregate']
 #-----------------------------------------------------------------------------#
 #                           FUNCTION: Menu System
 #-----------------------------------------------------------------------------#
+# A menu system!
+
 def menuSystem():
     menuItem = input('Choose a number\n1 - Straight Convert\n2 - GM Convert\n3 - Exit\n')
     if menuItem == '1':
@@ -66,6 +68,7 @@ def menuSystem():
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Convert to CSV File - Straight Convert
 #-----------------------------------------------------------------------------#
+# basic function to convert the file from tsv to csv. Evententually do this to Excel.
 def straightConvert():
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.reader(csv_file_in, delimiter='\t')
@@ -92,7 +95,7 @@ def checkFormat(columnName):
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Append Errors to a log.
 #-----------------------------------------------------------------------------#
-# logs all errors to a file, would like to only append issue, but for now writes all issues with append mode. Doesn't write to file, fix later, less important
+# logs all errors to a file.
 
 def logErrorsToFile(issue):
     with open(failLogFile, 'a', newline='') as fail_log_file:
@@ -106,26 +109,37 @@ def logErrorsToFile(issue):
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Check Insurance Levels
 #-----------------------------------------------------------------------------#
-# Semi working in cw_scrap_paper.py, but needs additional checks
+# not quiet working.
+# change everything to use dictionaries, report back if all deactive, end if any active, otherwise run for loop until end of value.
 def check(ins_type,input):
 
     status = ['ACTIVE']
     notes = 'MONITORED IN CARRIER WATCH'
     final_status = 'ACTIVATE'
 
+    # New code? 1/10/19
+    # status = []
+    # notes = 'MONITORED IN CARRIER WATCH'
+    # final_status = 'ACTIVATE'
+    #
     # if ins_type == 'auto_limits':
     #     for row in input.split('~'):
     #         for item in auto_limits:
-    #             if row[0:len(item)] == item:
-    #                 listed_auto_ins_min = int(row[len(item)+2:].replace(',',''))
-    #                 if listed_auto_ins_min < auto_ins_min:
-    #                     if 'AUTO INSURANCE TO LOW' not in notes:
-    #                         notes += '~AUTO INSURANCE TO LOW'
-    #                     status.append('DEACTIVE')
-    #                 else:
-    #                     final_status = 'ACTIVE'
-    #                     return final_status
+    #             newList = row.replace('\t',"").replace(',',"")
+    #             term = newList[:newList.find('$')-1]
+    #             value = newList[newList.find('$')+1:]
+	# 			if 'ACTIVE' in list:
+	# 				return final_status
+	# 			elif:
+	# 				if term == item:
+	# 					if int(value) <= auto_ins_min:
+	# 						status.append('ACTIVE')
+	# 					else:
+	# 						if 'AUTO INSURANCE TO LOW' not in notes:
+	# 							notes += '~AUTO INSURANCE TO LOW'
+	# 						status.append('DEACTIVE')
 
+# should return notes, only need to return a value if everything fails.
     if ins_type == 'auto_limits':
         for row in input.split('~'):
             for item in auto_limits:
