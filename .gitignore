@@ -1,8 +1,6 @@
-
 *.xlsx
 *.csv
 *.ini
 *.jpg
-dat_cw_dict.py
-cw_scrap_paper_2.py
-cw_scrap_paper.py
+*.tsv
+*.txt
