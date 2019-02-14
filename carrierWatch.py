@@ -10,7 +10,6 @@
 #                   Got 1 part done, need to figure out how else to tell.
 #               DOT expired to be worked on, working on, i hate dates!
 #               first to expire, needs fixed for dates 22xx.
-#               Get posted to Github, to keep track of issues.
 #
 #
 #-----------------------------------------------------------------------------#
@@ -18,6 +17,7 @@
 #-----------------------------------------------------------------------------#
 import csv, datetime, time
 from datetime import datetime
+from datetime import date
 import pyperclip
 
 
@@ -29,6 +29,7 @@ stamp = datetime.now().strftime('%Y%m%d%H%M%S-')
 logStamp = datetime.now().strftime('%m-%d-%Y')
 currDate = time.strptime(str(datetime.now().strftime('%m/%d/%Y')), '%m/%d/%Y')
 
+
 # CONFIGURABLE
 fileIn = 'download.tsv'
 fileOutGM = stamp + 'DAT_UPLOAD.csv'
@@ -39,6 +40,7 @@ auto_ins_min = 100000
 cargo_ins_min = 100000
 general_ins_min = 1000000
 
+
 # WILL NEED TO BE MONITORED TO ENSURE WE ALWAYS ACCOUNT FOR ALL POSSIBILITES
 auto_limits = ['Combined Single Limit (Each Accident)', 'ANY ONE OCCURENCE CSL', 'CSL']
 cargo_limits = ['Limit', 'PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 'PER TRAILER', 'PER TRUCK', 'Per Vehicle', 'ANY 1 LOSS', 'ANY ONE LOAD', 'ANY ONE LOSS', 'ANY ONE OCC', 'ANY ONE OCCURENCE', 'ANY ONE OCCURRENCE', 'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT']
@@ -48,8 +50,6 @@ general_limits = ['Each Occurrence']
 #-----------------------------------------------------------------------------#
 #                           FUNCTION: Menu System
 #-----------------------------------------------------------------------------#
-# A menu system!
-
 def menuSystem():
     menuItem = input('Choose a number\n1 - Straight Convert\n2 - GM Convert\n3 - Exit\n')
     if menuItem == '1':
@@ -68,7 +68,6 @@ def menuSystem():
 #               FUNCTION: Convert to CSV File - Straight Convert
 #-----------------------------------------------------------------------------#
 # basic function to convert the file from tsv to csv. Eventually do this to Excel.
-
 def straightConvert():
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.reader(csv_file_in, delimiter='\t')
@@ -95,8 +94,8 @@ def checkFormat(columnName):
 #-----------------------------------------------------------------------------#
 def checkDOTExpiration(DOT,MCS150):
     if MCS150 != '':
-        year = int(datetime.now().strftime('%y'))
-        month = int(datetime.now().strftime('%m'))
+        year = date.now().year()
+        month = date.now().month()
         yearMCS = str(time.strptime(MCS150, '%m/%d/%Y'))
         monthMCS = str(time.strptime(MSC150))
         return DOT[-2],DOT[-1], MCS150, month, year
@@ -106,8 +105,6 @@ def checkDOTExpiration(DOT,MCS150):
 
 #   Requires exporting dot profile regardless. So use built in dates?
 #   does not function correctly yet.
-
-
 
 
 #-----------------------------------------------------------------------------#
@@ -127,8 +124,7 @@ def logErrorsToFile(issue):
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Check Insurance Levels
 #-----------------------------------------------------------------------------#
-# checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit.
-
+# checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit. Really want to clean this up more.
 def check(ins_type,input):
     status = set()
 
@@ -208,6 +204,7 @@ def check(ins_type,input):
     elif False in status:
         return False
 
+
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Convert for Upload to Global Main
 #-----------------------------------------------------------------------------#
@@ -219,14 +216,16 @@ def gmConvert():
         next(tsv_reader, None)
         if checkFormat(tsv_reader.fieldnames) == True:
 
+
 #-----------------------------------------------------------------------------#
 # Checks info against company policy and prints out csv file for upload
             # debugCounter = 1
             with open(fileOutGM, 'w', newline='') as csv_file_out:
                 csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-                header = ['COMP_DOCKET_NUMBER','COMP_LGL_NAME','COMP_DBA_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS']
+                header = ['COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS']
                 csv_writer.writerow(header)
                 for row in tsv_reader:
+
 
 #-----------------------------------------------------------------------------#
 # DEFAULT VARIABLES FOR FILEIN
@@ -234,6 +233,12 @@ def gmConvert():
                     status.add('ACTIVE')
                     final_status = ''
                     notes = ''
+
+
+#-----------------------------------------------------------------------------#
+# Check if DBA, and if so move legal to notes.
+                    if row['COMP_DBA_NAME'] != '':
+                        notes += '~LEGAL NAME ' + row['COMP_LGL_NAME']
 
 
 #-----------------------------------------------------------------------------#
@@ -251,6 +256,7 @@ def gmConvert():
                     if row['SAFE_RATE'] == 'C':
                         notes += '~SAFETY RATING CONDITIONAL'
                         status.add('INACTIVE')
+
 
 #-----------------------------------------------------------------------------#
 # Check for Cargo/Carrier Authority
@@ -281,24 +287,22 @@ def gmConvert():
                         status.add('ACTIVE')
 
 
-
 #-----------------------------------------------------------------------------#
 # Auto, Cargo, & General Expiration Check
                     first_to_expire = (0,0,0,0,0,0,0,0,0)
 
                     if row['CARGO_EXP_DATE'] != '': # working
                         if time.strptime(row['CARGO_EXP_DATE'], '%m/%d/%Y') < currDate:
-                            notes += '~CARGO INS EXPIRED' + row['CARGO_EXP_DATE']
+                            notes += '~CARGO INS EXPIRED ' + row['CARGO_EXP_DATE']
                             status.add('INACTIVE')
                         first_to_expire = time.strptime(row['CARGO_EXP_DATE'], '%m/%d/%Y')
-
                     else:
                         notes += '~CARGO INS NOT LISTED'
                         status.add('INACTIVE')
 
                     if row['GENERAL_EXP_DATE'] != '': # working
                         if time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y') < currDate:
-                            notes += '~GENERAL INS EXPIRED' + row['GENERAL_EXP_DATE']
+                            notes += '~GENERAL INS EXPIRED ' + row['GENERAL_EXP_DATE']
                             status.add('INACTIVE')
                         if first_to_expire < time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y'):
                             first_to_expire = time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y')
@@ -308,7 +312,7 @@ def gmConvert():
 
                     if row['AUTO_EXP_DATE'] != '': # working
                         if time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y') < currDate:
-                            notes += '~AUTO INS EXPIRED' + row['AUTO_EXP_DATE']
+                            notes += '~AUTO INS EXPIRED ' + row['AUTO_EXP_DATE']
                             status = 'INACTIVE'
                         if first_to_expire < time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y'):
                             first_to_expire = time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y')
@@ -320,6 +324,7 @@ def gmConvert():
                     if first_to_expire == '0/0/0':
                         first_to_expire = ''
 
+
 #-----------------------------------------------------------------------------#
 # Authorized Broker Check
                     if row['ENTITY_TYPE'] == 'BROKER':
@@ -328,6 +333,7 @@ def gmConvert():
                     elif 'BROKER' in row['ENTITY_TYPE']:
                         notes += '~VENDOR IS A BROKER, TENDER TO CARRIER ASSET ONLY'
                         status.add('ACTIVE')
+
 
 #-----------------------------------------------------------------------------#
 # Docket Prefix Check
@@ -341,6 +347,7 @@ def gmConvert():
                     if row['OPER_TYPE'] == 'Intrastate Only (Non-HM)':
                         notes += '~INTRASTATE ONLY (NON-HM)'
 
+
 #-----------------------------------------------------------------------------#
 # Check for INACTIVE status, otherwise keep status Active
                     if 'INACTIVE' in status:
@@ -349,11 +356,15 @@ def gmConvert():
                         final_status = 'ACTIVE'
                         notes = '~MONITORED ON CARRIER WATCH'
 
+
 #-----------------------------------------------------------------------------#
 
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
-                        newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                        if row['COMP_DBA_NAME'] != '':
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                        else:
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
                     else:
                         logErrorsToFile(row['COMP_DOT'])
 
