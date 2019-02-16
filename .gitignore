@@ -5,3 +5,4 @@
 *.tsv
 *.txt
 download.tsv
+scratch_dw.py

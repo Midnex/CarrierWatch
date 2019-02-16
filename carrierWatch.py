@@ -18,7 +18,6 @@
 import csv, datetime, time
 from datetime import datetime
 from datetime import date
-import pyperclip
 
 
 #-----------------------------------------------------------------------------#
