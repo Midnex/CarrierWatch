@@ -4,12 +4,15 @@
 #
 #-----------------------------------------------------------------------------#
 #       Owner: llanerost+gtsi@gmail.com
-#       Version: 20190212
+#       Version: 20190220
 #
 #       TODO:   Cargo authority this is a tough one
-#                   Got 1 part done, need to figure out how else to tell.
-#               DOT expired to be worked on, working on, i hate dates!
-#               first to expire, needs fixed for dates 22xx.
+#                Got 1 part done, need to figure out how else to tell.
+#       TODO:   DOT expired to be worked on, working on, i hate dates!
+#       TODO:   first to expire, needs fixed for dates 22xx.
+#       TODO:   set more of the code up as functions.
+#       TODO:   Set a config file in json or something else for easier changes
+#       TODO:   Limits can be tuples.
 #
 #
 #-----------------------------------------------------------------------------#
@@ -33,7 +36,7 @@ currDate = time.strptime(str(datetime.now().strftime('%m/%d/%Y')), '%m/%d/%Y')
 fileIn = 'download.tsv'
 fileOutGM = stamp + 'DAT_UPLOAD.csv'
 fileOutCSV = stamp + 'download.csv'
-failLogFile = 'failed_log.csv' # no code written yet, will write in append mode.
+failLogFile = 'failed_log.csv'
 
 auto_ins_min = 100000
 cargo_ins_min = 100000
@@ -91,6 +94,10 @@ def checkFormat(columnName):
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Checks DOT Expiration Date
 #-----------------------------------------------------------------------------#
+# http://www.part380.com/blog/2014/03/11/biennial-update-mcs-150-registration-renewal/
+
+# Requires exporting dot profile regardless. So use built in dates?
+# does not function correctly yet.
 def checkDOTExpiration(DOT,MCS150):
     if MCS150 != '':
         year = date.now().year()
@@ -100,11 +107,6 @@ def checkDOTExpiration(DOT,MCS150):
         return DOT[-2],DOT[-1], MCS150, month, year
     else:
         return False
-    # http://www.part380.com/blog/2014/03/11/biennial-update-mcs-150-registration-renewal/
-
-#   Requires exporting dot profile regardless. So use built in dates?
-#   does not function correctly yet.
-
 
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Append Errors to a log.
@@ -123,7 +125,7 @@ def logErrorsToFile(issue):
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Check Insurance Levels
 #-----------------------------------------------------------------------------#
-# checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit. Really want to clean this up more.
+# checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit. - Really want to clean this up more. Possibly build a new function for if '~' and else: pulling ins type.
 def check(ins_type,input):
     status = set()
 
@@ -209,7 +211,7 @@ def check(ins_type,input):
 #-----------------------------------------------------------------------------#
 def gmConvert():
 #-----------------------------------------------------------------------------#
-# Reads CarrierWatch Export file, currently no integrity checks
+# Reads CarrierWatch Export file - currently no integrity checks
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.DictReader(csv_file_in, delimiter='\t')
         next(tsv_reader, None)
@@ -218,7 +220,6 @@ def gmConvert():
 
 #-----------------------------------------------------------------------------#
 # Checks info against company policy and prints out csv file for upload
-            # debugCounter = 1
             with open(fileOutGM, 'w', newline='') as csv_file_out:
                 csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
                 header = ['COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS']
@@ -258,11 +259,10 @@ def gmConvert():
 
 
 #-----------------------------------------------------------------------------#
-# Check for Cargo/Carrier Authority
+# Check for Carrier Authority - still needs more checks, other ways to be inactive
                     if row['AUTH_COM'] == '' and row['AUTH_CONT'] == '' and row['AUTH_BRK'] == '':
                         status.add('INACTIVE')
                         notes += '~CARRIER AUTHORITY NOT ACTIVE'
-                    # still needs more checks, other ways to be inactive
 
 
 #-----------------------------------------------------------------------------#
