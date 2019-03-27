@@ -4,17 +4,22 @@
 #
 #-----------------------------------------------------------------------------#
 #       Owner: llanerost+gtsi@gmail.com
-#       Version: 20190220
-#
+#       Version: 20190327
+
+#               CRITICAL
 #       TODO:   Cargo authority this is a tough one
-#                Got 1 part done, need to figure out how else to tell.
-#       TODO:   DOT expired to be worked on, working on, i hate dates!
+#               Got 1 part done, need to figure out how else to tell.
+#       TODO:   DOT expired to be worked on, working on, I hate dates!
+
+#               BUGS
 #       TODO:   first to expire, needs fixed for dates 22xx.
+
+#               CLEANUP/FEATURES
 #       TODO:   set more of the code up as functions.
 #       TODO:   Set a config file in json or something else for easier changes
-#       TODO:   Limits can be tuples.
-#
-#
+#       TODO:   Switch limits to duples from list.
+
+
 #-----------------------------------------------------------------------------#
 #                              Required Modules
 #-----------------------------------------------------------------------------#
