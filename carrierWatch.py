@@ -4,29 +4,33 @@
 #
 #-----------------------------------------------------------------------------#
 #       Owner: llanerost+gtsi@gmail.com
-#       Version: 20190327
+#       Version: 20190402
 
 #               CRITICAL
-#       TODO:   Cargo authority this is a tough one
-#               Got 1 part done, need to figure out how else to tell.
-#       TODO:   DOT expired to be worked on, working on, I hate dates!
 
 #               BUGS
 #       TODO:   first to expire, needs fixed for dates 22xx.
+#       TODO:   Convert all time modules to datetime.timedelta
 
 #               CLEANUP/FEATURES
 #       TODO:   set more of the code up as functions.
 #       TODO:   Set a config file in json or something else for easier changes
-#       TODO:   Switch limits to duples from list.
+#       TODO:   Switch limits to tuples from list.
+#       TODO:   function to clean up import file, read into memory, then export
+#               or convert. This will remove a lot of code!
+#       TODO:   Split into multiple modules.
+#       TODO:   Convert to exe, create ini file for settings.
+#       TODO:   Switch straightConvert to convert to Excel.
 
 
 #-----------------------------------------------------------------------------#
 #                              Required Modules
 #-----------------------------------------------------------------------------#
-import csv, datetime, time
+import csv, time, pyperclip
 from datetime import datetime
 from datetime import date
 
+clip = []
 
 #-----------------------------------------------------------------------------#
 #                                 Variables
@@ -34,21 +38,23 @@ from datetime import date
 # DO NOT CHANGE
 stamp = datetime.now().strftime('%Y%m%d%H%M%S-')
 logStamp = datetime.now().strftime('%m-%d-%Y')
-currDate = time.strptime(str(datetime.now().strftime('%m/%d/%Y')), '%m/%d/%Y')
+currDate = datetime.now().strftime('%Y-%m-%d')
 
-
+print(currDate)
 # CONFIGURABLE
 fileIn = 'download.tsv'
 fileOutGM = stamp + 'DAT_UPLOAD.csv'
 fileOutCSV = stamp + 'download.csv'
 failLogFile = 'failed_log.csv'
 
+# Set my insurance company, contact JS for updates Jan 1 each year.
 auto_ins_min = 100000
 cargo_ins_min = 100000
 general_ins_min = 1000000
 
 
-# WILL NEED TO BE MONITORED TO ENSURE WE ALWAYS ACCOUNT FOR ALL POSSIBILITES
+# WILL NEED TO BE MONITORED TO ENSURE WE ALWAYS ACCOUNT FOR ALL POSSIBILITES, Check every quarter.
+# Last Checked Date: 1/1/2019.
 auto_limits = ['Combined Single Limit (Each Accident)', 'ANY ONE OCCURENCE CSL', 'CSL']
 cargo_limits = ['Limit', 'PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 'PER TRAILER', 'PER TRUCK', 'Per Vehicle', 'ANY 1 LOSS', 'ANY ONE LOAD', 'ANY ONE LOSS', 'ANY ONE OCC', 'ANY ONE OCCURENCE', 'ANY ONE OCCURRENCE', 'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT']
 general_limits = ['Each Occurrence']
@@ -61,7 +67,6 @@ def menuSystem():
     menuItem = input('Choose a number\n1 - Straight Convert\n2 - GM Convert\n3 - Exit\n')
     if menuItem == '1':
         straightConvert()
-        print('File has been converted to csv.\nExiting...')
     elif menuItem == '2':
         gmConvert()
     elif menuItem == '3':
@@ -74,7 +79,7 @@ def menuSystem():
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Convert to CSV File - Straight Convert
 #-----------------------------------------------------------------------------#
-# basic function to convert the file from tsv to csv. Eventually do this to Excel.
+# basic function to convert the file from tsv to csv.
 def straightConvert():
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.reader(csv_file_in, delimiter='\t')
@@ -84,34 +89,18 @@ def straightConvert():
                 csv_writer.writerow(row)
         csv_file_out.close()
     csv_file_in.close()
+    print('File has been converted to csv.\nExiting...')
 
 
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Check File Format for GM Convert
 #-----------------------------------------------------------------------------#
 def checkFormat(columnName):
-    if len(columnName) == 139:
+    if len(columnName) == 139 + 1:
         return True
     else:
         return False
 
-
-#-----------------------------------------------------------------------------#
-#               FUNCTION: Checks DOT Expiration Date
-#-----------------------------------------------------------------------------#
-# http://www.part380.com/blog/2014/03/11/biennial-update-mcs-150-registration-renewal/
-
-# Requires exporting dot profile regardless. So use built in dates?
-# does not function correctly yet.
-def checkDOTExpiration(DOT,MCS150):
-    if MCS150 != '':
-        year = date.now().year()
-        month = date.now().month()
-        yearMCS = str(time.strptime(MCS150, '%m/%d/%Y'))
-        monthMCS = str(time.strptime(MSC150))
-        return DOT[-2],DOT[-1], MCS150, month, year
-    else:
-        return False
 
 #-----------------------------------------------------------------------------#
 #                 FUNCTION: Append Errors to a log.
@@ -128,11 +117,19 @@ def logErrorsToFile(issue):
 
 
 #-----------------------------------------------------------------------------#
+#                 FUNCTION: Changes date from mm/dd/yyyy to yyyy/mm/dd
+#-----------------------------------------------------------------------------#
+# Function just to change the date format cause i am being a goon and can't figure it out.
+def sillyDate(date):
+    return date[-4:] + '-' + date[:2] + '-' + date[3:5]
+
+
+#-----------------------------------------------------------------------------#
 #                 FUNCTION: Check Insurance Levels
 #-----------------------------------------------------------------------------#
 # checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit. - Really want to clean this up more. Possibly build a new function for if '~' and else: pulling ins type.
 def check(ins_type,input):
-    status = set()
+    checkStatus = set()
 
     # Auto limit check versus min
     if ins_type == 'auto_limits':
@@ -144,9 +141,9 @@ def check(ins_type,input):
                 for item in auto_limits:
                     if term == item:
                         if value >= auto_ins_min:
-                            status.add(True)
+                            checkStatus.add(True)
                         elif value <= auto_ins_min:
-                            status.add(False)
+                            checkStatus.add(False)
         else:
             newList = input.replace('\t','').replace(',','').strip()
             term = newList[:newList.find('$')-1]
@@ -154,9 +151,9 @@ def check(ins_type,input):
             for item in auto_limits:
                 if term == item:
                     if int(value) >= auto_ins_min:
-                        status.add(True)
+                        checkStatus.add(True)
                     elif int(value) <= auto_ins_min:
-                        status.add(False)
+                        checkStatus.add(False)
 
     # Cargo limit check versus min
     elif ins_type == 'cargo_limits':
@@ -168,9 +165,9 @@ def check(ins_type,input):
                 for item in cargo_limits:
                     if term == item:
                         if value >= cargo_ins_min:
-                            status.add(True)
+                            checkStatus.add(True)
                         elif int(value) <= cargo_ins_min:
-                            status.add(False)
+                            checkStatus.add(False)
         else:
             newList = input.replace('\t','').replace(',','').strip()
             term = newList[:newList.find('$')-1]
@@ -178,9 +175,9 @@ def check(ins_type,input):
             for item in cargo_limits:
                 if term == item:
                     if int(value) >= cargo_ins_min:
-                        status.add(True)
+                        checkStatus.add(True)
                     elif int(value) <= cargo_ins_min:
-                        status.add(False)
+                        checkStatus.add(False)
 
     # General limit check versus min
     elif ins_type == 'general_limits':
@@ -192,9 +189,9 @@ def check(ins_type,input):
                 for item in general_limits:
                     if term == item:
                         if value >= general_ins_min:
-                            status.add(True)
+                            checkStatus.add(True)
                         elif int(value) <= general_ins_min:
-                            status.add(False)
+                            checkStatus.add(False)
         else:
             newList = input.replace('\t','').replace(',','').strip()
             term = newList[:newList.find('$')-1]
@@ -202,12 +199,12 @@ def check(ins_type,input):
             for item in general_limits:
                 if term == item:
                     if int(value) >= general_ins_min:
-                        status.add(True)
+                        checkStatus.add(True)
                     elif int(value) <= general_ins_min:
-                        status.add(False)
-    if True in status:
+                        checkStatus.add(False)
+    if True in checkStatus:
         return True
-    elif False in status:
+    elif False in checkStatus:
         return False
 
 
@@ -234,10 +231,13 @@ def gmConvert():
 
 #-----------------------------------------------------------------------------#
 # DEFAULT VARIABLES FOR FILEIN
-                    status = set()
-                    status.add('ACTIVE')
+                    status = []
+                    status.append('ACTIVE')
                     final_status = ''
                     notes = ''
+                    first_to_expire = ''
+                    first_expire = []
+                    minDate = ''
 
 
 #-----------------------------------------------------------------------------#
@@ -247,96 +247,101 @@ def gmConvert():
 
 
 #-----------------------------------------------------------------------------#
-# DOT Expired/Exist
+# Checks for missing DOT, and DOT Inactive
                     if row['COMP_DOT'] == '':
                         notes += '~NO DOT NUMBER LISTED'
-                        status.add('INACTIVE')
-                        # checkDOTExpiration(row['COMP_DOT'],row['MCS150_DATE'])
-                        # if checkDOTExpiration(row['COMP_DOT'],row['MCS150_DATE']) == False:
-                        #     print(row['COMP_DOT'],checkDOTExpiration(row['COMP_DOT'],row['MCS150_DATE']),'INACTIVE')
+                        status.append('INACTIVE')
+                    if row['ENTITY_STATUS'] == 'I':
+                        notes += '~DOT# INACTIVE'
+                        status.append('INACTIVE')
 
 
 #-----------------------------------------------------------------------------#
 # Safety Rating Check
                     if row['SAFE_RATE'] == 'C':
                         notes += '~SAFETY RATING CONDITIONAL'
-                        status.add('INACTIVE')
+                        status.append('INACTIVE')
 
 
 #-----------------------------------------------------------------------------#
 # Check for Carrier Authority - still needs more checks, other ways to be inactive
-                    if row['AUTH_COM'] == '' and row['AUTH_CONT'] == '' and row['AUTH_BRK'] == '':
-                        status.add('INACTIVE')
+                    if row['AUTH_COM'] != 'A':
                         notes += '~CARRIER AUTHORITY NOT ACTIVE'
+                        status.append('INACTIVE')
+                    if row['AUTH_PEN_COM'] == 'Y':
+                        notes += '~CARRIER AUTHORITY PENDING'
+                        status.append('INACTIVE')
 
 
 #-----------------------------------------------------------------------------#
 # Auto, Cargo, & General Limit Check
-# Remove, code not working atm. working on new code.
-                    # print(row['COMP_DOCKET_NUMBER'])
                     if check('auto_limits',row['AUTO_LIMITS']) == False:
                         notes += '~AUTO INSURANCE TO LOW'
-                        status.add('INACTIVE')
+                        status.append('INACTIVE')
                     elif check('auto_limits',row['AUTO_LIMITS']) == True:
-                        status.add('ACTIVE')
+                        status.append('ACTIVE')
                     if check('cargo_limits',row['CARGO_LIMITS']) == False:
                         notes += '~CARGO INSURANCE TO LOW'
-                        status.add('INACTIVE')
+                        status.append('INACTIVE')
                     elif check('cargo_limits',row['CARGO_LIMITS']) == True:
-                        status.add('ACTIVE')
+                        status.append('ACTIVE')
                     if check('general_limits',row['GENERAL_LIMITS']) == False:
                         notes += '~GENERAL INSURANCE TO LOW'
-                        status.add('INACTIVE')
+                        status.append('INACTIVE')
                     elif check('general_limits',row['GENERAL_LIMITS']) == True:
-                        status.add('ACTIVE')
+                        status.append('ACTIVE')
 
 
 #-----------------------------------------------------------------------------#
 # Auto, Cargo, & General Expiration Check
-                    first_to_expire = (0,0,0,0,0,0,0,0,0)
-
-                    if row['CARGO_EXP_DATE'] != '': # working
-                        if time.strptime(row['CARGO_EXP_DATE'], '%m/%d/%Y') < currDate:
+                    if row['CARGO_EXP_DATE'] != '':
+                        selectDate = sillyDate(row['CARGO_EXP_DATE'])
+                        if selectDate < currDate:
                             notes += '~CARGO INS EXPIRED ' + row['CARGO_EXP_DATE']
-                            status.add('INACTIVE')
-                        first_to_expire = time.strptime(row['CARGO_EXP_DATE'], '%m/%d/%Y')
-                    else:
+                            status.append('INACTIVE')
+                        first_expire.append(selectDate)
+                    elif row['CARGO_EXP_DATE'] == '':
                         notes += '~CARGO INS NOT LISTED'
-                        status.add('INACTIVE')
-
-                    if row['GENERAL_EXP_DATE'] != '': # working
-                        if time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y') < currDate:
+                        status.append('INACTIVE')
+                    else:
+                        notes += '~cargo checked'
+                    if row['GENERAL_EXP_DATE'] != '':
+                        selectDate = sillyDate(row['GENERAL_EXP_DATE'])
+                        if selectDate < currDate:
                             notes += '~GENERAL INS EXPIRED ' + row['GENERAL_EXP_DATE']
-                            status.add('INACTIVE')
-                        if first_to_expire < time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y'):
-                            first_to_expire = time.strptime(row['GENERAL_EXP_DATE'], '%m/%d/%Y')
-                    else:
+                            status.append('INACTIVE')
+                        first_expire.append(selectDate)
+                    elif row['GENERAL_EXP_DATE'] == '':
                         notes += '~GENERAL INS NOT LISTED'
-                        status.add('INACTIVE')
-
-                    if row['AUTO_EXP_DATE'] != '': # working
-                        if time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y') < currDate:
-                            notes += '~AUTO INS EXPIRED ' + row['AUTO_EXP_DATE']
-                            status = 'INACTIVE'
-                        if first_to_expire < time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y'):
-                            first_to_expire = time.strptime(row['AUTO_EXP_DATE'], '%m/%d/%Y')
+                        status.append('INACTIVE')
                     else:
-                        notes += '~AUTO INS NOT LISTED'
-                        status.add('INACTIVE')
+                        notes += '~general checked'
 
-                    first_to_expire = str(first_to_expire[1]) + '/' + str(first_to_expire[2]) + '/' + str(first_to_expire[0])
-                    if first_to_expire == '0/0/0':
-                        first_to_expire = ''
+                    if row['AUTO_EXP_DATE'] != '':
+                        selectDate = sillyDate(row['AUTO_EXP_DATE'])
+                        if selectDate < currDate:
+                            notes += '~AUTO INS EXPIRED ' + row['AUTO_EXP_DATE']
+                            status.append('INACTIVE')
+                        first_expire.append(selectDate)
+                    elif row['AUTO_EXP_DATE'] == '':
+                        notes += '~AUTO INS NOT LISTED'
+                        status.append('INACTIVE')
+                    else:
+                        notes += '~auto checked'
+
+                    if first_expire != []:
+                        minDate = max(first_expire)
+                        first_to_expire = minDate[5:7] + '/' + minDate[-2:] + '/' + minDate[:4]
 
 
 #-----------------------------------------------------------------------------#
 # Authorized Broker Check
                     if row['ENTITY_TYPE'] == 'BROKER':
                         notes += '~VENDOR IS A BROKER, NO ASSETS'
-                        status.add('INACTIVE')
+                        status.append('INACTIVE')
                     elif 'BROKER' in row['ENTITY_TYPE']:
                         notes += '~VENDOR IS A BROKER, TENDER TO CARRIER ASSET ONLY'
-                        status.add('ACTIVE')
+                        status.append('ACTIVE')
 
 
 #-----------------------------------------------------------------------------#
@@ -348,8 +353,9 @@ def gmConvert():
 
 #-----------------------------------------------------------------------------#
 # Checks if Intrastate versus Interstate
-                    if row['OPER_TYPE'] == 'Intrastate Only (Non-HM)':
-                        notes += '~INTRASTATE ONLY (NON-HM)'
+                    if 'Only' in row['OPER_TYPE']:
+                        notes += '~INTRASTATE ONLY'
+                        status.append('INACTIVE')
 
 
 #-----------------------------------------------------------------------------#
@@ -393,7 +399,6 @@ def gmConvert():
     Safety is checked
     DOT Profile & Commodities
 ===========WARNING INVALID FORMAT============
-
 Convert canceled''')
 
 
