@@ -1,43 +1,41 @@
-import pyperclip
-
-
-#   TODO: get length of each item, and store in list. run through list and print exactly that but remove spaces, \t and other items that are not needed.
 #   TODO: If row is blank it needs to append to the previous
 
+export = open('carddump.csv','w')
+count = 0
+
+header = 'Vnd#, Type, Status, Attached, Last Used, Vendor Name, Add, City, St, Zip, Phone, Email, Fax, Air, MC#, InsExpDate, Cmp., Ind, E I No, TTL.INV, Vendor Notes'
+
 with open('cardump.txt','r') as txt_in_file:
-    rowArrayLen = []
-    count = 1
-    for textRow in txt_in_file:
-        rowArray = []
-        if count == 1:
-            for rowCol in textRow.split('. '):
-                if 'Attached' in rowCol:
-                    rowArrayLen.append(len('Attached'))
-                    rowArray.append('Attached')
-                    rowArrayLen.append(len('Last Used'))
-                    rowArray.append('Last Used')
-                    rowArrayLen.append(len(rowCol[rowCol.find('Vendor Name'):]))
-                    rowArray.append(rowCol[rowCol.find('Vendor Name'):])
-                if 'St Zip' in rowCol:
-                    rowArrayLen.append(len('St'))
-                    rowArray.append('St')
-                    rowArrayLen.append(len('Zip'))
-                    rowArray.append('Zip')
-                if 'InsExpDate Cmp' in rowCol:
-                    rowArrayLen.append(len('InsExpDate'))
-                    rowArray.append('InsExpDate')
-                    rowArrayLen.append(len('Cmp'))
-                    rowArray.append('Cmp')
-                if 'Ind E I No' in rowCol:
-                    rowArrayLen.append(len('Ind'))
-                    rowArray.append('Ind')
-                    rowArrayLen.append(len('E I No'))
-                    rowArray.append('E I No')
-                else:
-                    rowArrayLen.append(len(rowCol)+1)
-                    rowArray.append(rowCol + '.')
-                    print(rowArray)
-        else:
-            print(rowArray)
-            break
+    for line in txt_in_file:
+        vnd = line[0:7].strip().upper()
+        type = line[8:20].strip().upper()
+        status = line[21:30].strip().upper()
+        attached = line[31:39].strip().upper()
+        lastused = line[40:49].strip().upper().replace('.','/')
+        vndname = line[50:90].strip().upper()
+        add = line[91:124].strip().upper()
+        city = line[125:144].strip().upper()
+        st = line[145:147].strip().upper()
+        zip = line[148:158].strip().upper()
+        phone = line[159:171].strip().upper().replace('-','').replace(' ','')
+        email = line[172:202].strip().upper()
+        fax = line[203:215].strip().upper().replace('-','').replace(' ','')
+        air = line[216:220].strip().upper()
+        mcnum = line[221:227].strip().upper()
+        insExpDate = line[228:238].strip().upper()
+        cmp = line[239:243].strip().upper()
+        ind = line[244:247].strip().upper()
+        eino = line[248:260].strip().upper()
+        ttlinv = line[261:274].strip().upper().replace(',','')
+        # date = line[275:283].upper().strip() #not used currently
+        vndnotes = line[284:].strip().upper().replace(',','~').replace('Ú','~')
+
+        fileHeader = vnd, type, status, attached, lastused, vndname, add, city, st, zip, phone, email, fax, air, mcnum, insExpDate, cmp, ind, eino, ttlinv, vndnotes
+
+        if count == 0:
+            export.write(header)
+        elif count > 0:
+            newHeader = '"' + vnd + '","' + type + '","' + status + '","' + attached + '","' + lastused + '","' + vndname + '","' + add + '","' + city + '","' + st + '","' + zip + '","' + phone + '","' + email + '","' + fax + '","' + air + '","' + mcnum + '","' + insExpDate + '","' + cmp + '","' + ind + '","' + eino + '","' + ttlinv + '","' + vndnotes + '"\n'
+            export.write(str(newHeader))
         count += 1
+print('done')
