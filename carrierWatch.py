@@ -4,7 +4,7 @@
 #
 #-----------------------------------------------------------------------------#
 #       Owner: llanerost+gtsi@gmail.com
-#       Version: 20190402
+#       Version: 20190405
 
 #               CRITICAL
 
@@ -26,11 +26,11 @@
 #-----------------------------------------------------------------------------#
 #                              Required Modules
 #-----------------------------------------------------------------------------#
-import csv, time, pyperclip
+import csv, time, os
+from os import system
 from datetime import datetime
 from datetime import date
 
-clip = []
 
 #-----------------------------------------------------------------------------#
 #                                 Variables
@@ -40,7 +40,22 @@ stamp = datetime.now().strftime('%Y%m%d%H%M%S-')
 logStamp = datetime.now().strftime('%m-%d-%Y')
 currDate = datetime.now().strftime('%Y-%m-%d')
 
-print(currDate)
+logo = '''                                             ,
+      -j|||||||"                           <|||
+    {||"                                    "
+  ,|||`         <T|||||T  ,|||T|| /|||||l i||{  ,j|,|||L  ,|||i||
+  |||L             ,|||   |||" ` ,|||" ` /||| ,|||L,|||l  |||"
+ ||||         s||F^|||L  i||/    |||L   ,|||  |||F**^"`  i||/
+ }|||~,,,,~= W|||,|||l, /|||    i||{    |||L ||||x,-=sL /|||
+  "*LLANE*"  *ll*"*l=*` ===    !===    ===*   *ROST^`   ===                                 T||{
+                                           |||L    ,,,     +|/                             {||l
+                                          ]|||    /|||    ||"             ,jT             ,|||
+                                          ||||   |||||  ,||   <j|||||L ;||||||l ,<l||| |   ||il|| l
+                                          !||j / /L||| /|/       /|||   |||`   {||"      i||{  |||{
+                                          L|||{|" L|||||"   i||Fj|||`  L||L   L||/      ||||  /|||
+                                          L|||l   L|||l     ||L,L||{, {|||,,- |||L,,,~ ,|||  ,|||
+                                          lll"    Wll*     <|l*"!ll"` v|l=^`  "l|ll*'  Wll`  WllL   '''
+
 # CONFIGURABLE
 fileIn = 'download.tsv'
 fileOutGM = stamp + 'DAT_UPLOAD.csv'
@@ -64,7 +79,10 @@ general_limits = ['Each Occurrence']
 #                           FUNCTION: Menu System
 #-----------------------------------------------------------------------------#
 def menuSystem():
-    menuItem = input('Choose a number\n1 - Straight Convert\n2 - GM Convert\n3 - Exit\n')
+    os.system('cls' if os.name == 'nt' else 'clear')
+    system('color 0e')
+    print(logo)
+    menuItem = input('Choose a menu number\n1 - Convert to CSV\n2 - GM Upload\n3 - Exit\n')
     if menuItem == '1':
         straightConvert()
     elif menuItem == '2':
@@ -81,6 +99,8 @@ def menuSystem():
 #-----------------------------------------------------------------------------#
 # basic function to convert the file from tsv to csv.
 def straightConvert():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('Converting to CSV File.')
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.reader(csv_file_in, delimiter='\t')
         with open(fileOutCSV, 'w', newline='') as csv_file_out:
@@ -90,6 +110,7 @@ def straightConvert():
         csv_file_out.close()
     csv_file_in.close()
     print('File has been converted to csv.\nExiting...')
+    input('')
 
 
 #-----------------------------------------------------------------------------#
@@ -106,7 +127,6 @@ def checkFormat(columnName):
 #                 FUNCTION: Append Errors to a log.
 #-----------------------------------------------------------------------------#
 # logs all errors to a file.
-
 def logErrorsToFile(issue):
     with open(failLogFile, 'a', newline='') as fail_log_file:
         csv_writer = csv.writer(fail_log_file, delimiter=',', quoting=csv.QUOTE_ALL)
@@ -214,6 +234,8 @@ def check(ins_type,input):
 def gmConvert():
 #-----------------------------------------------------------------------------#
 # Reads CarrierWatch Export file - currently no integrity checks
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('Converting to GM Upload file.')
     with open(fileIn, 'r') as csv_file_in:
         tsv_reader = csv.DictReader(csv_file_in, delimiter='\t')
         next(tsv_reader, None)
@@ -386,6 +408,7 @@ def gmConvert():
             csv_file_out.close()
             print('File has been converted to GM import file.\nExiting...')
         else:
+            os.system('cls' if os.name == 'nt' else 'clear')
             print('''
 ===========WARNING INVALID FORMAT============
     Ensure the following is selected
@@ -399,8 +422,8 @@ def gmConvert():
     Safety is checked
     DOT Profile & Commodities
 ===========WARNING INVALID FORMAT============
-Convert canceled''')
-
+Convert canceled, Press enter to return to menu''')
+            input('')
 
 #-----------------------------------------------------------------------------#
 #                    CALLS MENU FUNCTION FOR USER SELECTION
