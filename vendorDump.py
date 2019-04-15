@@ -22,14 +22,14 @@ with open('cardump.txt','r') as txt_in_file:
         email = line[172:202].strip().upper() # Vendor Email
         fax = line[203:215].strip().upper().replace('-','').replace(' ','') # Vendor Fax
         air = line[216:220].strip().upper() # UNLOCODE Airport (minus US prefix)
-        mcnum = line[221:227].strip().upper() #MC Number
-        insExpDate = line[228:238].strip().upper() # Insurance Expiration Date
-        cmp = line[239:243].strip().upper() # ?
-        dotNum = line[244:251].strip().upper() # DOT Number
-        eino = line[252:264].strip().upper()  # E I Number
-        ttlinv = line[265:278].strip().upper().replace(',','') # Total invoiced
-        # date = line[275:283].upper().strip() # Follow Up Date
-        vndnotes = line[288:].strip().upper().replace(',','~').replace('Ú','~') # Vendor Notes
+        mcnum = line[221:228].strip().upper() #MC Number
+        insExpDate = line[229:239].strip().upper() # Insurance Expiration Date
+        cmp = line[240:244].strip().upper() # ?
+        dotNum = line[245:252].strip().upper() # DOT Number
+        eino = line[253:265].strip().upper()  # E I Number
+        ttlinv = line[266:279].strip().upper().replace(',','') # Total invoiced
+        # date = line[279:283].upper().strip() # Follow Up Date, Change to flag.
+        vndnotes = line[289:].strip().upper().replace(',','~').replace('Ú','~') # Vendor Notes
 
         # fixs for Excel dropping zeros.
         if dotNum == '':

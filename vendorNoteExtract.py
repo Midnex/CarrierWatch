@@ -1,36 +1,41 @@
 export = open('VendorNotes.csv','w')
 
-vndLast = ''
+vndNumLast = ''
 count = 0
 
-
-with open('2019.04.08-cardump.txt','r') as txt_in_file:
+with open('2019.04.11-cardump.txt','r') as txt_in_file:
     for line in txt_in_file:
-        vnd = line[0:7].replace(' ','')
-        vndnotes = line[288:]
+        vndNum = line[0:7].replace(' ','')
+        vndNotes = line[289:].replace('ú', '~').replace('"','\'').upper()
 
         if count == 0:
             export.write('"Vndr#","Vendor Notes"\n')
-        if count > 3:
-            if vnd == '':
-                if '|' in vndnotes:
-                    for i in vndnotes.split('|'):
-                        # output = '"' + vndLast + '","' + i.replace('\n','') + '"\n'
-                        output = '"{}",""{}"\n'.format(vndLast,i.replace('\n',''))
-                        export.write(output.replace('ú',' ').upper())
+            count += 1
+        elif count > 3:
+            if vndNum == '': # if vndNum is empty
+                if '|' in vndNotes:
+                    for note in vndNotes.split('|'):
+                        note = note.replace('\n','')
+                        output = '"{}","{}"\n'.format(vndNumLast, note)
+                        export.write(output)
+                        count += 1
                 else:
-                    # output = '"' + vndLast + '","' + vndnotes.replace('\n','') + '"\n'
-                    output = '"{}","{}"\m'.format(vndLast,vnd.replace('\n',''))
-                    export.write(output.replace('ú',' ').upper())
-            else:
-                if '|' in vndnotes:
-                    for i in vndnotes.split('|'):
-                        # output = '"' + vnd + '","' + i.replace('\n','') + '"\n'
-                        output = '"{}","{}"\n'.format(vndLast,i.replace('\n',''))
-                        export.write(output.replace('ú',' ').upper())
+                    vndNotes = vndNotes.replace('\n','')
+                    output = '"{}","{}"\n'.format(vndNumLast, vndNotes)
+                    export.write(output)
+                    count += 1
+            else: # if vndNum is not empty
+                if '|' in vndNotes:
+                    for note in vndNotes.split('|'):
+                        note = note.replace('\n', '')
+                        output = '"{}","{}"\n'.format(vndNum, note)
+                        export.write(output)
+                        count += 1
                 else:
-                    # output = '"' + vndLast + '","' + vndnotes.replace('\n','') + '"\n'
-                    output = '"{}","{}"\n'.format(vndLast,vnd.replace('\n',''))
-                    export.write(output.replace('ú',' ').upper())
-        vndLast = vnd
-        count += 1
+                    vndNotes = vndNotes.replace('\n', '')
+                    output = '"{}","{}"\n'.format(vndNum, vndNotes)
+                    export.write(output)
+                    count += 1
+                vndNumLast = vndNum
+        else:
+            count += 1
