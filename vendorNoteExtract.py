@@ -3,37 +3,39 @@ export = open('VendorNotes.csv','w')
 vndNumLast = ''
 count = 0
 
-with open('2019.04.11-cardump.txt','r') as txt_in_file:
+with open('2019.04.18-cardump.txt','r') as txt_in_file:
     for line in txt_in_file:
         vndNum = line[0:7].replace(' ','')
+        vndMC = line[222:228]
+        vndDOT = line[244:252]
         vndNotes = line[289:].replace('ú', '~').replace('"','\'').upper()
 
         if count == 0:
-            export.write('"Vndr#","Vendor Notes"\n')
+            export.write('"Vndr#","Docket Number","DOT Number","Vendor Notes"\n')
             count += 1
         elif count > 3:
             if vndNum == '': # if vndNum is empty
                 if '|' in vndNotes:
                     for note in vndNotes.split('|'):
                         note = note.replace('\n','')
-                        output = '"{}","{}"\n'.format(vndNumLast, note)
+                        output = '"{}","{}","{}","{}"\n'.format(vndNumLast, vndMC, vndDOT, note)
                         export.write(output)
                         count += 1
                 else:
                     vndNotes = vndNotes.replace('\n','')
-                    output = '"{}","{}"\n'.format(vndNumLast, vndNotes)
+                    output = '"{}","{}","{}","{}"\n'.format(vndNumLast, vndMC, vndDOT, vndNotes)
                     export.write(output)
                     count += 1
             else: # if vndNum is not empty
                 if '|' in vndNotes:
                     for note in vndNotes.split('|'):
                         note = note.replace('\n', '')
-                        output = '"{}","{}"\n'.format(vndNum, note)
+                        output = '"{}","{}","{}","{}"\n'.format(vndNum, vndMC, vndDOT, note)
                         export.write(output)
                         count += 1
                 else:
                     vndNotes = vndNotes.replace('\n', '')
-                    output = '"{}","{}"\n'.format(vndNum, vndNotes)
+                    output = '"{}","{}","{}","{}"\n'.format(vndNum, vndMC, vndDOT, vndNotes)
                     export.write(output)
                     count += 1
                 vndNumLast = vndNum
