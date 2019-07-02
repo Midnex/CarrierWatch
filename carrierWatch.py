@@ -61,6 +61,7 @@ fileIn = 'download.tsv'
 fileOutGM = stamp + 'DAT_UPLOAD.csv'
 fileOutCSV = stamp + 'download.csv'
 failLogFile = 'failed_log.csv'
+row_variables = ["COMP_DBA_NAME", "COMP_LGL_NAME", "COMP_DOT", "ENTITY_STATUS", "SAFE_RATE", "AUTH_COM", "AUTH_PEN_COM", "AUTO_LIMITS", "CARGO_LIMITS", "GENERAL_LIMITS", "CARGO_EXP_DATE", "AUTO_EXP_DATE", "GENERAL_EXP_DATE", "ENTITY_TYPE", "COMP_DOCKET_PREFIX", "OPER_TYPE", "COMP_DOCKET_NUMBER"]
 
 # Set my insurance company, contact JS for updates Jan 1 each year.
 auto_ins_min = 100000
@@ -71,7 +72,14 @@ general_ins_min = 1000000
 # WILL NEED TO BE MONITORED TO ENSURE WE ALWAYS ACCOUNT FOR ALL POSSIBILITES, Check every quarter.
 # Last Checked Date: 1/1/2019.
 auto_limits = ['Combined Single Limit (Each Accident)', 'ANY ONE OCCURENCE CSL', 'CSL']
-cargo_limits = ['Limit', 'PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 'PER TRAILER', 'PER TRUCK', 'Per Vehicle', 'ANY 1 LOSS', 'ANY ONE LOAD', 'ANY ONE LOSS', 'ANY ONE OCC', 'ANY ONE OCCURENCE', 'ANY ONE OCCURRENCE', 'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT']
+cargo_limits = [
+                'Limit', 
+                'PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 
+                'PER TRAILER', 'PER TRUCK', 'Per Vehicle', 
+                'ANY 1 LOSS', 'ANY ONE LOAD', 'ANY ONE LOSS', 
+                'ANY ONE OCC', 'ANY ONE OCCURENCE', 'ANY ONE OCCURRENCE', 
+                'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 
+                'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT']
 general_limits = ['Each Occurrence']
 
 
@@ -107,8 +115,6 @@ def straightConvert():
             csv_writer = csv.writer(csv_file_out, delimiter=',',quoting=csv.QUOTE_ALL)
             for row in tsv_reader:
                 csv_writer.writerow(row)
-        csv_file_out.close()
-    csv_file_in.close()
     print('File has been converted to csv.\nExiting...')
     input('')
 
@@ -116,11 +122,16 @@ def straightConvert():
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Check File Format for GM Convert
 #-----------------------------------------------------------------------------#
-def checkFormat(columnName):
-    if len(columnName) == 139 + 1:
-        return True
-    else:
-        return False
+def checkFormat(fileIn, row_variables):
+    count = 0
+    with open(fileIn, 'r') as tsv_file_in:
+        tsv_reader = csv.DictReader(tsv_file_in, delimiter='\t')
+        header = tsv_reader.fieldnames
+        for item in row_variables:
+            if item not in header:
+                count += 1
+
+    return True if count == 0 else False
 
 
 #-----------------------------------------------------------------------------#
@@ -133,7 +144,6 @@ def logErrorsToFile(issue):
         errorInfo = (logStamp, issue, 'DOES NOT HAVE A MC # AND WAS NOT EXPORTED')
         csv_writer.writerow(errorInfo)
         print(issue, 'DOES NOT HAVE A MC # AND WAS NOT EXPORTED - ', 'Error logged to', failLogFile)
-        fail_log_file.close()
 
 
 #-----------------------------------------------------------------------------#
@@ -236,10 +246,10 @@ def gmConvert():
 # Reads CarrierWatch Export file - currently no integrity checks
     os.system('cls' if os.name == 'nt' else 'clear')
     print('Converting to GM Upload file.')
-    with open(fileIn, 'r') as csv_file_in:
-        tsv_reader = csv.DictReader(csv_file_in, delimiter='\t')
+    with open(fileIn, 'r') as tsv_file_in:
+        tsv_reader = csv.DictReader(tsv_file_in, delimiter='\t')
         next(tsv_reader, None)
-        if checkFormat(tsv_reader.fieldnames) == True:
+        if checkFormat(fileIn, row_variables) == True:
 
 
 #-----------------------------------------------------------------------------#
@@ -404,8 +414,7 @@ def gmConvert():
 #-----------------------------------------------------------------------------#
 # Prints to row
                     csv_writer.writerow(newLine)
-                csv_file_in.close()
-            csv_file_out.close()
+
             print('File has been converted to GM import file.\nExiting...')
         else:
             os.system('cls' if os.name == 'nt' else 'clear')
@@ -415,7 +424,7 @@ def gmConvert():
     Tab-delimited from the drop down menu
     Include Header bullet selected as Yes
     DOT Authority is checked
-    DOT Insurance is checked)
+    DOT Insurance is checked
     Cargo Insurance is checked
     Auto Insurance is checked
     General Insurance is checked
@@ -429,4 +438,6 @@ Convert canceled, Press enter to return to menu''')
 #                    CALLS MENU FUNCTION FOR USER SELECTION
 #-----------------------------------------------------------------------------#
 
-menuSystem()
+
+if __name__ == '__main__':
+    menuSystem()
