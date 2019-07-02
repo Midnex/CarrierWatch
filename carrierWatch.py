@@ -3,8 +3,8 @@
 #                 Script for handling https://power.dat.com tsv files
 #
 #-----------------------------------------------------------------------------#
-#       Owner: llanerost+gtsi@gmail.com
-#       Version: 20190405
+#       Owner: llanerost@casyl.com
+#       Version: 20190702
 
 #               CRITICAL
 

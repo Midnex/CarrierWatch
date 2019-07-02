@@ -4,8 +4,9 @@
 *.jpg
 *.tsv
 *.txt
-download.tsv
-scratch_dw.py
-download_watchlist.png
-carrierWatch.png
+*.png
+scratchPaper.py
 .vscode/settings.json
+*.xls
+*.tsv
+download.tsv
