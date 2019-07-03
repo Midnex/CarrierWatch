@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------#
 #
-#                 Script for handling https://power.dat.com tsv files
+#             Script for handling https://power.dat.com tsv files
 #
 #-----------------------------------------------------------------------------#
 #       Owner: llanerost@casyl.com
@@ -15,12 +15,13 @@
 #               CLEANUP/FEATURES
 #       TODO:   set more of the code up as functions.
 #       TODO:   Set a config file in json or something else for easier changes
-#       TODO:   Switch limits to tuples from list.
 #       TODO:   function to clean up import file, read into memory, then export
 #               or convert. This will remove a lot of code!
 #       TODO:   Split into multiple modules.
 #       TODO:   Convert to exe, create ini file for settings.
 #       TODO:   Switch straightConvert to convert to Excel.
+#       TODO:   Build function to check files for limits, currently manually done!
+#       TODO:   Build GUI interface
 
 
 #-----------------------------------------------------------------------------#
@@ -33,13 +34,17 @@ from datetime import date
 
 
 #-----------------------------------------------------------------------------#
-#                                 Variables
+#                                Date Variables
 #-----------------------------------------------------------------------------#
 # DO NOT CHANGE
-stamp = datetime.now().strftime('%Y%m%d%H%M%S-')
+stamp = datetime.now().strftime('%Y%m%d%H%M%S')
 logStamp = datetime.now().strftime('%m-%d-%Y')
 currDate = datetime.now().strftime('%Y-%m-%d')
 
+
+#-----------------------------------------------------------------------------#
+#                                Other Settings
+#-----------------------------------------------------------------------------#
 logo = '''                                             ,
       -j|||||||"                           <|||
     {||"                                    "
@@ -54,33 +59,37 @@ logo = '''                                             ,
                                           !||j / /L||| /|/       /|||   |||`   {||"      i||{  |||{
                                           L|||{|" L|||||"   i||Fj|||`  L||L   L||/      ||||  /|||
                                           L|||l   L|||l     ||L,L||{, {|||,,- |||L,,,~ ,|||  ,|||
-                                          lll"    Wll*     <|l*"!ll"` v|l=^`  "l|ll*'  Wll`  WllL   '''
+                                          lll"    Wll*     <|l*"!ll"` v|l=^`  "l|ll*'  Wll`  WllL'''
 
-# CONFIGURABLE
+# CONFIGURABLE 
 fileIn = 'download.tsv'
-fileOutGM = stamp + 'DAT_UPLOAD.csv'
-fileOutCSV = stamp + 'download.csv'
+fileOutGM = f"{stamp}-DAT_UPLOAD.csv"
+fileOutCSV = f"{stamp}-download.csv"
 failLogFile = 'failed_log.csv'
-row_variables = ["COMP_DBA_NAME", "COMP_LGL_NAME", "COMP_DOT", "ENTITY_STATUS", "SAFE_RATE", "AUTH_COM", "AUTH_PEN_COM", "AUTO_LIMITS", "CARGO_LIMITS", "GENERAL_LIMITS", "CARGO_EXP_DATE", "AUTO_EXP_DATE", "GENERAL_EXP_DATE", "ENTITY_TYPE", "COMP_DOCKET_PREFIX", "OPER_TYPE", "COMP_DOCKET_NUMBER"]
+fileInDelim = '\t'
+fileOutDelim = ','
+row_variables = ('COMP_DBA_NAME', 'COMP_LGL_NAME', 'COMP_DOT', 'ENTITY_STATUS',
+                 'SAFE_RATE', 'AUTH_COM', 'AUTH_PEN_COM', 'AUTO_LIMITS', 
+                 'CARGO_LIMITS', 'GENERAL_LIMITS', 'CARGO_EXP_DATE', 
+                 'AUTO_EXP_DATE', 'GENERAL_EXP_DATE', 'ENTITY_TYPE', 
+                 'COMP_DOCKET_PREFIX', 'OPER_TYPE', 'COMP_DOCKET_NUMBER')
 
-# Set my insurance company, contact JS for updates Jan 1 each year.
-auto_ins_min = 100000
-cargo_ins_min = 100000
-general_ins_min = 1000000
+# Insurance minimums, contact JS for updates Jan 1 each year, last checked 1/1/2019.
+auto_ins_min = 100_000
+cargo_ins_min = 100_000
+general_ins_min = 1_000_000
 
 
 # WILL NEED TO BE MONITORED TO ENSURE WE ALWAYS ACCOUNT FOR ALL POSSIBILITES, Check every quarter.
 # Last Checked Date: 1/1/2019.
-auto_limits = ['Combined Single Limit (Each Accident)', 'ANY ONE OCCURENCE CSL', 'CSL']
-cargo_limits = [
-                'Limit', 
-                'PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 
+auto_limits = ('Combined Single Limit (Each Accident)', 'ANY ONE OCCURENCE CSL', 'CSL')
+cargo_limits = ('PER OCC', 'PER OCCUR', 'PER OCCURENCE', 'PER OCCURRANCE', 'PER OCCURRENCE', 
                 'PER TRAILER', 'PER TRUCK', 'Per Vehicle', 
                 'ANY 1 LOSS', 'ANY ONE LOAD', 'ANY ONE LOSS', 
                 'ANY ONE OCC', 'ANY ONE OCCURENCE', 'ANY ONE OCCURRENCE', 
-                'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 
-                'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT']
-general_limits = ['Each Occurrence']
+                'EACH OCCURRENCE', 'EACH OCCURRENCE LIMIT', 'Limit',
+                'PER DIA', 'PER DISASTER', 'PER LOAD', 'PER LOSS', 'PER SHIPMENT')
+general_limits = ('Each Occurrence')
 
 
 #-----------------------------------------------------------------------------#
@@ -110,9 +119,9 @@ def straightConvert():
     os.system('cls' if os.name == 'nt' else 'clear')
     print('Converting to CSV File.')
     with open(fileIn, 'r') as csv_file_in:
-        tsv_reader = csv.reader(csv_file_in, delimiter='\t')
+        tsv_reader = csv.reader(csv_file_in, delimiter=fileInDelim)
         with open(fileOutCSV, 'w', newline='') as csv_file_out:
-            csv_writer = csv.writer(csv_file_out, delimiter=',',quoting=csv.QUOTE_ALL)
+            csv_writer = csv.writer(csv_file_out, delimiter=fileOutDelim,quoting=csv.QUOTE_ALL)
             for row in tsv_reader:
                 csv_writer.writerow(row)
     print('File has been converted to csv.\nExiting...')
@@ -122,10 +131,10 @@ def straightConvert():
 #-----------------------------------------------------------------------------#
 #               FUNCTION: Check File Format for GM Convert
 #-----------------------------------------------------------------------------#
-def checkFormat(fileIn, row_variables):
+def checkFormat():
     count = 0
     with open(fileIn, 'r') as tsv_file_in:
-        tsv_reader = csv.DictReader(tsv_file_in, delimiter='\t')
+        tsv_reader = csv.DictReader(tsv_file_in, delimiter=fileInDelim)
         header = tsv_reader.fieldnames
         for item in row_variables:
             if item not in header:
@@ -140,10 +149,10 @@ def checkFormat(fileIn, row_variables):
 # logs all errors to a file.
 def logErrorsToFile(issue):
     with open(failLogFile, 'a', newline='') as fail_log_file:
-        csv_writer = csv.writer(fail_log_file, delimiter=',', quoting=csv.QUOTE_ALL)
-        errorInfo = (logStamp, issue, 'DOES NOT HAVE A MC # AND WAS NOT EXPORTED')
+        csv_writer = csv.writer(fail_log_file, delimiter=fileOutDelim, quoting=csv.QUOTE_ALL)
+        errorInfo = (f"{logStamp} {issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED")
         csv_writer.writerow(errorInfo)
-        print(issue, 'DOES NOT HAVE A MC # AND WAS NOT EXPORTED - ', 'Error logged to', failLogFile)
+        print(f"{issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED - Error logged to {failLogFile}")
 
 
 #-----------------------------------------------------------------------------#
@@ -165,7 +174,7 @@ def check(ins_type,input):
     if ins_type == 'auto_limits':
         if '~' in input:
             for row in input.split('~'):
-                newList = row.replace('\t','').replace(',','').strip()
+                newList = row.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
                 term = newList.split(' $')[0].strip()
                 value = int(newList.split(' $')[1].strip().replace(' ',''))
                 for item in auto_limits:
@@ -175,7 +184,7 @@ def check(ins_type,input):
                         elif value <= auto_ins_min:
                             checkStatus.add(False)
         else:
-            newList = input.replace('\t','').replace(',','').strip()
+            newList = input.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
             term = newList[:newList.find('$')-1]
             value = newList[newList.find('$')+1:]
             for item in auto_limits:
@@ -189,7 +198,7 @@ def check(ins_type,input):
     elif ins_type == 'cargo_limits':
         if '~' in input:
             for row in input.split('~'):
-                newList = row.replace('\t','').replace(',','').strip()
+                newList = row.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
                 term = newList.split(' $')[0].strip()
                 value = int(newList.split(' $')[1].strip().replace(' ',''))
                 for item in cargo_limits:
@@ -199,7 +208,7 @@ def check(ins_type,input):
                         elif int(value) <= cargo_ins_min:
                             checkStatus.add(False)
         else:
-            newList = input.replace('\t','').replace(',','').strip()
+            newList = input.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
             term = newList[:newList.find('$')-1]
             value = newList[newList.find('$')+1:]
             for item in cargo_limits:
@@ -213,7 +222,7 @@ def check(ins_type,input):
     elif ins_type == 'general_limits':
         if '~' in input:
             for row in input.split('~'):
-                newList = row.replace('\t','').replace(',','').strip()
+                newList = row.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
                 term = newList.split(' $')[0].strip()
                 value = int(newList.split(' $')[1].strip().replace(' ',''))
                 for item in general_limits:
@@ -223,7 +232,7 @@ def check(ins_type,input):
                         elif int(value) <= general_ins_min:
                             checkStatus.add(False)
         else:
-            newList = input.replace('\t','').replace(',','').strip()
+            newList = input.replace(fileInDelim,'').replace(fileOutDelim,'').strip()
             term = newList[:newList.find('$')-1]
             value = newList[newList.find('$')+1:]
             for item in general_limits:
@@ -247,16 +256,16 @@ def gmConvert():
     os.system('cls' if os.name == 'nt' else 'clear')
     print('Converting to GM Upload file.')
     with open(fileIn, 'r') as tsv_file_in:
-        tsv_reader = csv.DictReader(tsv_file_in, delimiter='\t')
+        tsv_reader = csv.DictReader(tsv_file_in, delimiter=fileInDelim)
         next(tsv_reader, None)
-        if checkFormat(fileIn, row_variables) == True:
+        if checkFormat() == True:
 
 
 #-----------------------------------------------------------------------------#
 # Checks info against company policy and prints out csv file for upload
             with open(fileOutGM, 'w', newline='') as csv_file_out:
-                csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-                header = ['COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS']
+                csv_writer = csv.writer(csv_file_out, delimiter=fileOutDelim, quoting=csv.QUOTE_ALL)
+                header = ('COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS')
                 csv_writer.writerow(header)
                 for row in tsv_reader:
 
@@ -275,7 +284,7 @@ def gmConvert():
 #-----------------------------------------------------------------------------#
 # Check if DBA, and if so move legal to notes.
                     if row['COMP_DBA_NAME'] != '':
-                        notes += '~LEGAL NAME ' + row['COMP_LGL_NAME']
+                        notes += f"~LEGAL NAME {row['COMP_LGL_NAME']}"
 
 
 #-----------------------------------------------------------------------------#
@@ -329,7 +338,7 @@ def gmConvert():
                     if row['CARGO_EXP_DATE'] != '':
                         selectDate = sillyDate(row['CARGO_EXP_DATE'])
                         if selectDate < currDate:
-                            notes += '~CARGO INS EXPIRED ' + row['CARGO_EXP_DATE']
+                            notes += f"~CARGO INS EXPIRED {row['CARGO_EXP_DATE']}"
                             status.append('INACTIVE')
                         first_expire.append(selectDate)
                     elif row['CARGO_EXP_DATE'] == '':
@@ -340,7 +349,7 @@ def gmConvert():
                     if row['GENERAL_EXP_DATE'] != '':
                         selectDate = sillyDate(row['GENERAL_EXP_DATE'])
                         if selectDate < currDate:
-                            notes += '~GENERAL INS EXPIRED ' + row['GENERAL_EXP_DATE']
+                            notes += f"~GENERAL INS EXPIRED {row['GENERAL_EXP_DATE']}"
                             status.append('INACTIVE')
                         first_expire.append(selectDate)
                     elif row['GENERAL_EXP_DATE'] == '':
@@ -352,7 +361,7 @@ def gmConvert():
                     if row['AUTO_EXP_DATE'] != '':
                         selectDate = sillyDate(row['AUTO_EXP_DATE'])
                         if selectDate < currDate:
-                            notes += '~AUTO INS EXPIRED ' + row['AUTO_EXP_DATE']
+                            notes += f"~AUTO INS EXPIRED {row['AUTO_EXP_DATE']}"
                             status.append('INACTIVE')
                         first_expire.append(selectDate)
                     elif row['AUTO_EXP_DATE'] == '':
@@ -363,7 +372,7 @@ def gmConvert():
 
                     if first_expire != []:
                         minDate = max(first_expire)
-                        first_to_expire = minDate[5:7] + '/' + minDate[-2:] + '/' + minDate[:4]
+                        first_to_expire = f"{minDate[5:7]}/{minDate[-2:]}/{minDate[:4]}"
 
 
 #-----------------------------------------------------------------------------#
@@ -380,7 +389,7 @@ def gmConvert():
 # Docket Prefix Check
                     if row['COMP_DOCKET_PREFIX'] != 'MC':
                         if row['COMP_DOCKET_PREFIX'] != '':
-                            notes += '~' + row['COMP_DOCKET_PREFIX'] + row['COMP_DOCKET_NUMBER']
+                            notes += f"~{row['COMP_DOCKET_PREFIX']}{row['COMP_DOCKET_NUMBER']}"
 
 
 #-----------------------------------------------------------------------------#
@@ -404,9 +413,9 @@ def gmConvert():
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
                         if row['COMP_DBA_NAME'] != '':
-                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                            newLine = f"row['COMP_DOCKET_NUMBER'], {row['COMP_DBA_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
                         else:
-                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                            newLine = f"{row['COMP_DOCKET_NUMBER']}, {row['COMP_LGL_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
                     else:
                         logErrorsToFile(row['COMP_DOT'])
 
