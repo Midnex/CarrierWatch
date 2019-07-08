@@ -30,7 +30,6 @@
 import csv, time, os
 from os import system
 from datetime import datetime
-from datetime import date
 
 
 #-----------------------------------------------------------------------------#
@@ -135,9 +134,8 @@ def checkFormat():
     count = 0
     with open(fileIn, 'r') as tsv_file_in:
         tsv_reader = csv.DictReader(tsv_file_in, delimiter=fileInDelim)
-        header = tsv_reader.fieldnames
         for item in row_variables:
-            if item not in header:
+            if item not in tsv_reader.fieldnames:
                 count += 1
 
     return True if count == 0 else False
@@ -150,7 +148,7 @@ def checkFormat():
 def logErrorsToFile(issue):
     with open(failLogFile, 'a', newline='') as fail_log_file:
         csv_writer = csv.writer(fail_log_file, delimiter=fileOutDelim, quoting=csv.QUOTE_ALL)
-        errorInfo = (f"{logStamp} {issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED")
+        errorInfo = f"{logStamp} {issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED"
         csv_writer.writerow(errorInfo)
         print(f"{issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED - Error logged to {failLogFile}")
 
@@ -159,8 +157,8 @@ def logErrorsToFile(issue):
 #                 FUNCTION: Changes date from mm/dd/yyyy to yyyy/mm/dd
 #-----------------------------------------------------------------------------#
 # Function just to change the date format cause i am being a goon and can't figure it out.
-def sillyDate(date):
-    return date[-4:] + '-' + date[:2] + '-' + date[3:5]
+def convertDate(date):
+    return f"{date[-4:]}-{date[:2]}-{date[3:5]}"
 
 
 #-----------------------------------------------------------------------------#
@@ -336,7 +334,7 @@ def gmConvert():
 #-----------------------------------------------------------------------------#
 # Auto, Cargo, & General Expiration Check
                     if row['CARGO_EXP_DATE'] != '':
-                        selectDate = sillyDate(row['CARGO_EXP_DATE'])
+                        selectDate = convertDate(row['CARGO_EXP_DATE'])
                         if selectDate < currDate:
                             notes += f"~CARGO INS EXPIRED {row['CARGO_EXP_DATE']}"
                             status.append('INACTIVE')
@@ -347,7 +345,7 @@ def gmConvert():
                     else:
                         notes += '~cargo checked'
                     if row['GENERAL_EXP_DATE'] != '':
-                        selectDate = sillyDate(row['GENERAL_EXP_DATE'])
+                        selectDate = convertDate(row['GENERAL_EXP_DATE'])
                         if selectDate < currDate:
                             notes += f"~GENERAL INS EXPIRED {row['GENERAL_EXP_DATE']}"
                             status.append('INACTIVE')
@@ -359,7 +357,7 @@ def gmConvert():
                         notes += '~general checked'
 
                     if row['AUTO_EXP_DATE'] != '':
-                        selectDate = sillyDate(row['AUTO_EXP_DATE'])
+                        selectDate = convertDate(row['AUTO_EXP_DATE'])
                         if selectDate < currDate:
                             notes += f"~AUTO INS EXPIRED {row['AUTO_EXP_DATE']}"
                             status.append('INACTIVE')
