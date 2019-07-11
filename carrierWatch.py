@@ -98,7 +98,7 @@ def menuSystem():
     os.system('cls' if os.name == 'nt' else 'clear')
     system('color 0e')
     print(logo)
-    menuItem = input('Choose a menu number\n1 - Convert to CSV\n2 - GM Upload\n3 - Exit\n')
+    menuItem = input('Choose a menu selection:\n  1. Convert to CSV\n  2. GM Upload\n  3. Exit\n> ')
     if menuItem == '1':
         straightConvert()
     elif menuItem == '2':
@@ -411,9 +411,9 @@ def gmConvert():
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
                         if row['COMP_DBA_NAME'] != '':
-                            newLine = f"row['COMP_DOCKET_NUMBER'], {row['COMP_DBA_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
                         else:
-                            newLine = f"{row['COMP_DOCKET_NUMBER']}, {row['COMP_LGL_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
                     else:
                         logErrorsToFile(row['COMP_DOT'])
 
