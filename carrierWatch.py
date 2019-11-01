@@ -17,8 +17,8 @@
 #       TODO:   Set a config file in json or something else for easier changes
 #       TODO:   function to clean up import file, read into memory, then export
 #               or convert. This will remove a lot of code!
-#       TODO:   Split into multiple modules.
-#       TODO:   Convert to exe, create ini file for settings.
+#       TODO:   Split into multiple functions.
+#       TODO:   Convert to exe, create ini file for settings, or json.
 #       TODO:   Switch straightConvert to convert to Excel.
 #       TODO:   Build function to check files for limits, currently manually done!
 #       TODO:   Build GUI interface
@@ -98,7 +98,7 @@ def menuSystem():
     os.system('cls' if os.name == 'nt' else 'clear')
     system('color 0e')
     print(logo)
-    menuItem = input('Choose a menu number\n1 - Convert to CSV\n2 - GM Upload\n3 - Exit\n')
+    menuItem = input('Choose a menu selection:\n  1. Convert to CSV\n  2. GM Upload\n  3. Exit\n> ')
     if menuItem == '1':
         straightConvert()
     elif menuItem == '2':
@@ -137,7 +137,6 @@ def checkFormat():
         for item in row_variables:
             if item not in tsv_reader.fieldnames:
                 count += 1
-
     return True if count == 0 else False
 
 
@@ -167,7 +166,6 @@ def convertDate(date):
 # checks insurance type against types of insurance that are covered and then checks if the value meets or exceeds min limit. - Really want to clean this up more. Possibly build a new function for if '~' and else: pulling ins type.
 def check(ins_type,input):
     checkStatus = set()
-
     # Auto limit check versus min
     if ins_type == 'auto_limits':
         if '~' in input:
@@ -305,8 +303,9 @@ def gmConvert():
 #-----------------------------------------------------------------------------#
 # Check for Carrier Authority - still needs more checks, other ways to be inactive
                     if row['AUTH_COM'] != 'A':
-                        notes += '~CARRIER AUTHORITY NOT ACTIVE'
-                        status.append('INACTIVE')
+                        if row['AUTH_CONT'] != 'A':
+                            notes += '~CARRIER AUTHORITY NOT ACTIVE'
+                            status.append('INACTIVE')
                     if row['AUTH_PEN_COM'] == 'Y':
                         notes += '~CARRIER AUTHORITY PENDING'
                         status.append('INACTIVE')
@@ -411,9 +410,9 @@ def gmConvert():
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
                         if row['COMP_DBA_NAME'] != '':
-                            newLine = f"row['COMP_DOCKET_NUMBER'], {row['COMP_DBA_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
                         else:
-                            newLine = f"{row['COMP_DOCKET_NUMBER']}, {row['COMP_LGL_NAME']}, {row['COMP_DOT']}, {first_to_expire}, {notes[1:]}, {final_status}"
+                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
                     else:
                         logErrorsToFile(row['COMP_DOT'])
 

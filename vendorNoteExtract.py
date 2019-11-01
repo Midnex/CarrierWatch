@@ -18,24 +18,24 @@ with open('2019.04.18-cardump.txt','r') as txt_in_file:
                 if '|' in vndNotes:
                     for note in vndNotes.split('|'):
                         note = note.replace('\n','')
-                        output = '"{}","{}","{}","{}"\n'.format(vndNumLast, vndMC, vndDOT, note)
+                        output = f'"{vndNumLast}", "{vndMC}", "{vndDOT}", "{note}"\n'
                         export.write(output)
                         count += 1
                 else:
                     vndNotes = vndNotes.replace('\n','')
-                    output = '"{}","{}","{}","{}"\n'.format(vndNumLast, vndMC, vndDOT, vndNotes)
+                    output = f'"{vndNumLast}", "{vndMC}", "{vndDOT}", "{vndNotes}"\n'
                     export.write(output)
                     count += 1
             else: # if vndNum is not empty
                 if '|' in vndNotes:
                     for note in vndNotes.split('|'):
                         note = note.replace('\n', '')
-                        output = '"{}","{}","{}","{}"\n'.format(vndNum, vndMC, vndDOT, note)
+                        output = f'"{vndNum}", "{vndMC}", "{vndDOT}", "{note}"\n'
                         export.write(output)
                         count += 1
                 else:
                     vndNotes = vndNotes.replace('\n', '')
-                    output = '"{}","{}","{}","{}"\n'.format(vndNum, vndMC, vndDOT, vndNotes)
+                    output = f'"{vndNum}", "{vndMC}", "{vndDOT}", "{vndNotes}"\n'
                     export.write(output)
                     count += 1
                 vndNumLast = vndNum

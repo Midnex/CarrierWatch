@@ -1,8 +1,7 @@
 #   TODO: If row is blank it needs to append to the previous
 #   TODO: Vendor Notes now delimited by pipe |
-import csv
 
-export = open('carddump.csv','w')
+export = open('cardump.csv','w')
 count = 0
 
 header = '"Vnd#","Type","Status","Attached","Last Used","Vendor Name","Add","City","St","Zip","Phone","Email","Fax","Air","MC#","InsExpDate","Cmp.","DOT#","E I No","TTL.INV","Vendor Notes"'
@@ -36,12 +35,12 @@ with open('cardump.txt','r') as txt_in_file:
         if dotNum == '':
             dot = ''
         else:
-            dotNum = "'" + dotNum
+            dotNum = f"'{dotNum}"
 
         if mcnum == '':
             mcnum == ''
         else:
-            mcnum = "'" + mcnum
+            mcnum = f"'{mcnum}"
 
         if count == 0:
             export.write(header)
@@ -51,4 +50,4 @@ with open('cardump.txt','r') as txt_in_file:
 
             export.write(newHeader)
         count += 1
-print('done')
+print('Done exporting cardump.csv')
