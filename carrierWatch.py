@@ -144,12 +144,14 @@ def checkFormat():
 #                 FUNCTION: Append Errors to a log.
 #-----------------------------------------------------------------------------#
 # logs all errors to a file.
-def logErrorsToFile(issue):
-    with open(failLogFile, 'a', newline='') as fail_log_file:
-        csv_writer = csv.writer(fail_log_file, delimiter=fileOutDelim, quoting=csv.QUOTE_ALL)
-        errorInfo = f"{logStamp} {issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED"
-        csv_writer.writerow(errorInfo)
-        print(f"{issue} DOES NOT HAVE A MC # AND WAS NOT EXPORTED - Error logged to {failLogFile}")
+def logErrorsToFile(vendor,dot):
+    if vendor[0] == '3':
+        pass
+    else:
+        with open(failLogFile, 'a', newline='') as fail_log_file:
+            errorInfo = f'{logStamp} {vendor}-{dot} Does not have a MC#'
+            fail_log_file.write(f'"{logStamp}","{vendor}","{dot}","Missing MC#",\n')
+            print(errorInfo)
 
 
 #-----------------------------------------------------------------------------#
@@ -410,28 +412,31 @@ def gmConvert():
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
                         if row['COMP_DBA_NAME'] != '':
-                            newLine = row['COMP_ID'],
+                            newLine = [row['COMP_ID'],
                             row['COMP_DOCKET_NUMBER'],
                             row['COMP_DBA_NAME'],
                             row['COMP_DOT'],
                             first_to_expire,
                             notes[1:],
-                            final_status
+                            final_status]
                         else:
-                            newLine = row['COMP_ID'],
+                            newLine = [row['COMP_ID'],
                             row['COMP_DOCKET_NUMBER'],
                             row['COMP_LGL_NAME'],
                             row['COMP_DOT'],
                             first_to_expire,
                             notes[1:],
-                            final_status
+                            final_status]
                     else:
-                        logErrorsToFile(f"{row['COMP_ID']}-{row['COMP_DOT']}")
+                        logErrorsToFile(row['COMP_ID'],row['COMP_DOT'])
 
 
 #-----------------------------------------------------------------------------#
 # Prints to row
-                    csv_writer.writerow(newLine)
+                    if row['COMP_ID'][0] == '3':
+                        pass
+                    else:
+                        csv_writer.writerow(newLine)
 
             print('File has been converted to GM import file.\nExiting...')
         else:
