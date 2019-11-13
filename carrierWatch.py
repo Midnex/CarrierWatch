@@ -261,7 +261,7 @@ def gmConvert():
 # Checks info against company policy and prints out csv file for upload
             with open(fileOutGM, 'w', newline='') as csv_file_out:
                 csv_writer = csv.writer(csv_file_out, delimiter=fileOutDelim, quoting=csv.QUOTE_ALL)
-                header = ('COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS')
+                header = ('VENDOR','COMP_DOCKET_NUMBER','COMP_NAME','COMP_DOT','FIRST_TO_EXPIRE_DATE','NOTES','STATUS')
                 csv_writer.writerow(header)
                 for row in tsv_reader:
 
@@ -410,11 +410,23 @@ def gmConvert():
 # Docket Number Length Check
                     if len(row['COMP_DOCKET_NUMBER']):
                         if row['COMP_DBA_NAME'] != '':
-                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_DBA_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                            newLine = row['COMP_ID'],
+                            row['COMP_DOCKET_NUMBER'],
+                            row['COMP_DBA_NAME'],
+                            row['COMP_DOT'],
+                            first_to_expire,
+                            notes[1:],
+                            final_status
                         else:
-                            newLine = row['COMP_DOCKET_NUMBER'], row['COMP_LGL_NAME'], row['COMP_DOT'], first_to_expire, notes[1:], final_status
+                            newLine = row['COMP_ID'],
+                            row['COMP_DOCKET_NUMBER'],
+                            row['COMP_LGL_NAME'],
+                            row['COMP_DOT'],
+                            first_to_expire,
+                            notes[1:],
+                            final_status
                     else:
-                        logErrorsToFile(row['COMP_DOT'])
+                        logErrorsToFile(f"{row['COMP_ID']}-{row['COMP_DOT']}")
 
 
 #-----------------------------------------------------------------------------#
