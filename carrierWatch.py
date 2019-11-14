@@ -404,7 +404,6 @@ def gmConvert():
                         final_status = 'INACTIVE'
                     else:
                         final_status = 'ACTIVE'
-                        notes = '~MONITORED ON CARRIER WATCH'
 
 
 #-----------------------------------------------------------------------------#
