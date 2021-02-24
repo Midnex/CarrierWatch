@@ -6,7 +6,6 @@
 *.txt
 *.png
 scratchPaper.py
-.vscode/settings.json
 *.xls
 *.tsv
 download.tsv
