@@ -9,3 +9,4 @@ scratchPaper.py
 *.xls
 *.tsv
 download.tsv
+venv/*
